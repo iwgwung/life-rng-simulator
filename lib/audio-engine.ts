@@ -31,3 +31,5 @@ export class AudioEngine {
     osc.stop(this.ctx.currentTime + duration);
   }
 }
+
+export const engine = new AudioEngine();
