@@ -15,11 +15,12 @@ export const FloatingText = ({
   return (
     <motion.div
       initial={{ opacity: 1, y: 0, scale: 0.5 }}
-      animate={{ opacity: 0, y: -50, scale: 1.2 }}
+      animate={{ opacity: 0, y: -60, scale: 1.3 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      transition={{ duration: 1, ease: "easeOut" }}
       onAnimationComplete={onComplete}
-      className={`absolute left-0 right-0 text-center font-bold text-xl ${color} pointer-events-none`}
+      className="absolute left-0 right-0 text-center font-black text-lg pointer-events-none z-50 drop-shadow-lg"
+      style={{ top: '-20px' }}
     >
       {value}
     </motion.div>
