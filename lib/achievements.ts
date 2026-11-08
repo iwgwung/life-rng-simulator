@@ -24,7 +24,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'genio', name: 'Genio Absoluto', description: 'Llegar a 999 de inteligencia', emoji: '🧠', condition: (s) => s.intelligence >= 999 },
   { id: 'carismatico', name: 'Carismático', description: 'Llegar a 999 de carisma', emoji: '⭐', condition: (s) => s.charisma >= 999 },
   { id: 'feliz', name: 'Eteramente Feliz', description: 'Llegar a 999 de felicidad', emoji: '😄', condition: (s) => s.happiness >= 999 },
-  { id: 'rebirth_1', name: 'Reencarnado', description: 'Hacer tu primer Rebirth', emoji: '🔄', condition: (_, __, __, rb) => rb >= 1 },
-  { id: 'rebirth_5', name: 'Cíclico', description: 'Reencarnar 5 veces', emoji: '♻️', condition: (_, __, __, rb) => rb >= 5 },
-  { id: 'godly_event', name: 'Electo por los Dioses', description: 'Recibir un evento divino', emoji: '⚡', condition: (_, __, __, ___) => false }, // tracked via game
+  { id: 'rebirth_1', name: 'Reencarnado', description: 'Hacer tu primer Rebirth', emoji: '🔄', condition: (_, _, _, rb) => rb >= 1 },
+  { id: 'rebirth_5', name: 'Cíclico', description: 'Reencarnar 5 veces', emoji: '♻️', condition: (_, _, _, rb) => rb >= 5 },
+  { id: 'godly_event', name: 'Electo por los Dioses', description: 'Recibir un evento divino', emoji: '⚡', condition: (_, _, _, _) => false }, // tracked via game
 ];
