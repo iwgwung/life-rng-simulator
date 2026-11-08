@@ -126,82 +126,27 @@ export function shouldShowDilemma(year:number, career:Career): boolean {
   return Math.random() < (0.06 * avgWeight);
 }
 
-// ── RNG ENGINE: correct probability distribution ────────────────
-export function getWeightedRandomEvent(currentYear:number, career:Career|null=null): GameEvent {
-  // Filter eligible by age
-  let eligible = EVENTS.filter(e => {
-    if(e.ageMin!==undefined && currentYear < e.ageMin) return false;
-    if(e.ageMax!==undefined && currentYear > e.ageMax) return false;
-    return true;
-  });
-
-  // Weighted roll for rarity
-  const pool = [...CW,...UW,...RW,...EW,...LW,...MW,...GW];
-  const rarityRoll = pool[Math.floor(Math.random()*pool.length)];
-
-  // Get candidates of that rarity
-  let candidates = eligible.filter(e => e.rarity === rarityRoll);
-  
-  // If none, try common
-  if(!candidates.length) candidates = eligible.filter(e => e.rarity==='common');
-  
-  // If still none, fallback to any event without age restrictions
-  if(!candidates.length) {
-    const fb = EVENTS.filter(e => !e.ageMin && !e.ageMax);
-    return fb[Math.floor(Math.random()*fb.length)] ?? candidates[0];
-  }
-
-  // Career boost: reduce odds by half for matching career
-  if(career) {
-    candidates = candidates.map(e => 
-      e.career===career ? {...e, odds: Math.max(1, Math.floor(e.odds*0.5))} : e
-    );
-  }
-
-  // For rare+ events, apply luck bonus as multiplier on odds (lower = rarer)
-  const luckBonus = totalLuckBonus();
-  const finalCandidates = candidates.map(e => ({
-    ...e,
-    odds: Math.max(1, Math.floor(e.odds * (1 - luckBonus)))
-  }));
-
-  return finalCandidates[Math.floor(Math.random()*finalCandidates.length)];
-}
-
-// Separate function to avoid circular dependency issues
-function totalLuckBonus(): number {
-  // This is called from the game loop where we have access to state
-  // We'll pass it as parameter instead
-  return 0;
-}
-
+// ── RNG ENGINE: career-filtered + correct probabilities ─────────
 export function getWeightedRandomEventWithLuck(currentYear:number, career:Career|null=null, luck: number=0): GameEvent {
-  let eligible = EVENTS.filter(e => {
-    if(e.ageMin!==undefined && currentYear < e.ageMin) return false;
-    if(e.ageMax!==undefined && currentYear > e.ageMax) return false;
-    return true;
-  });
+  // Career determines which pool to draw from (60% own career, 40% universal)
+  const universal = EVENTS.filter(e => !e.ageMin && !e.ageMax || (e.ageMin!==undefined&&currentYear>=e.ageMin&&e.ageMax!==undefined&&currentYear<=e.ageMax));
+  const careerEvents = career ? EVENTS.filter(e => e.career===career && (!e.ageMin||currentYear>=e.ageMin) && (!e.ageMax||currentYear<=e.ageMax)) : [];
+  
+  // Pick pool: 60% career-specific, 40% universal
+  const useCareerPool = career && careerEvents.length > 0 && Math.random() < 0.6;
+  let eligible = useCareerPool ? careerEvents : universal;
+  
+  if(!eligible.length) eligible = universal;
 
   const pool = [...CW,...UW,...RW,...EW,...LW,...MW,...GW];
   const rarityRoll = pool[Math.floor(Math.random()*pool.length)];
-
   let candidates = eligible.filter(e => e.rarity === rarityRoll);
   if(!candidates.length) candidates = eligible.filter(e => e.rarity==='common');
-  if(!candidates.length) {
-    const fb = EVENTS.filter(e => !e.ageMin && !e.ageMax);
-    return fb[Math.floor(Math.random()*fb.length)] ?? candidates[0];
-  }
+  if(!candidates.length) return universal[Math.floor(Math.random()*universal.length)];
 
-  if(career) {
-    candidates = candidates.map(e => 
-      e.career===career ? {...e, odds: Math.max(1, Math.floor(e.odds*0.5))} : e
-    );
-  }
-
-  // Apply luck - reduce odds for higher rarity events
+  // Luck reduces odds for rare+ events
   const luckFactor = Math.max(0.3, 1 - luck);
   candidates = candidates.map(e => ({...e, odds: Math.max(1, Math.floor(e.odds * luckFactor))}));
-
   return candidates[Math.floor(Math.random()*candidates.length)];
 }
 

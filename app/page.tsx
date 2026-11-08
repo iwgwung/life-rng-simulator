@@ -40,6 +40,7 @@ export default function Home() {
   autoRef.current = autoPlay;
   const [career, setCareer] = useState<Career|null>(null);
   const [showCareerSelect, setShowCareerSelect] = useState(false);
+  const [backgroundGlow, setBackgroundGlow] = useState('transparent');
   const phase = getPhase(year);
   const phaseCfg = PHASE_CONFIG[phase];
   const totalLuck = luckBonus + getCareerLuck(career) + (upgrades.lucky_charm||0)*0.1 + (upgrades.education||0)*0.05;
@@ -49,9 +50,15 @@ export default function Home() {
       common:['#a8a29e'], uncommon:['#34d399'], rare:['#7dd3fc'], epic:['#a78bfa'], legendary:['#fbbf24'],
       mythical:['#22d3ee','#e879f9','#fb923c'], godly:['#fde047','#f59e0b','#fff','#a855f7','#22d3ee'],
     };
-    const n = rarity==='godly'?80:rarity==='mythical'?50:rarity==='legendary'?30:10;
+    const n = rarity==='godly'?120:rarity==='mythical'?80:rarity==='legendary'?50:15;
     setParticles(Array.from({length:n},()=>({id:uuidv4(),x:Math.random()*100,y:Math.random()*100,color:colors[rarity][Math.floor(Math.random()*colors[rarity].length)]})) );
-    setTimeout(()=>setParticles([]),3000);
+    setTimeout(()=>setParticles([]),rarity==='godly'?5000:3000);
+    // Set background glow color for rare events
+    if(rarity!=='common'&&rarity!=='uncommon'){
+      const glowColors:Record<string,string>={rare:'rgba(56,189,248,0.15)',epic:'rgba(139,92,246,0.2)',legendary:'rgba(245,158,11,0.25)',mythical:'rgba(232,121,249,0.3)',godly:'rgba(253,186,116,0.4)'};
+      setBackgroundGlow(glowColors[rarity]||'transparent');
+      setTimeout(()=>setBackgroundGlow('transparent'),rarity==='godly'?5000:3000);
+    }
   },[]);
   const playSound = useCallback((rarity:string)=>{
     const p=(n:number,w:OscillatorType,dur:number,dl=0)=>setTimeout(()=>engine.playTone(n,w,dur),dl);
@@ -136,8 +143,26 @@ export default function Home() {
     </div>
   );
   const EventCard=(ev:GameEvent)=>{const cfg=RARITY_CONFIG[ev.rarity];const isHigh=ev.rarity==='godly'||ev.rarity==='mythical'||ev.rarity==='legendary';return(
-    <motion.div initial={{opacity:0,scale:0.85,y:16}} animate={{opacity:1,scale:1,y:0}} exit={{opacity:0,scale:0.85,y:-16}} transition={{type:'spring',stiffness:220,damping:18}} className={`relative w-full rounded-2xl overflow-hidden border-2 ${cfg.border} ${cfg.bg} backdrop-blur-md shadow-2xl`}>
-      {isHigh&&<div className={`absolute inset-0 opacity-25 ${ev.rarity==='godly'?'animate-pulse bg-gradient-to-br from-yellow-400 via-fuchsia-500 to-cyan-400':ev.rarity==='mythical'?'animate-pulse bg-gradient-to-br from-fuchsia-500 to-pink-500':'animate-pulse bg-gradient-to-br from-amber-500 to-orange-500'}`}/>}
+    <motion.div
+      initial={{opacity:0,scale:0.3,rotateX:90}}
+      animate={{opacity:1,scale:1,rotateX:0}}
+      exit={{opacity:0,scale:0.3,rotateX:-90}}
+      transition={{type:'spring',stiffness:300,damping:20,duration:0.5}}
+      className={`relative w-full rounded-2xl overflow-hidden border-2 ${cfg.border} ${cfg.bg} backdrop-blur-md shadow-2xl`}
+      style={isHigh?{boxShadow:`0 0 60px ${ev.rarity==='godly'?'rgba(253,186,116,0.5)':ev.rarity==='mythical'?'rgba(232,121,249,0.4)':'rgba(245,158,11,0.3)'}`}:undefined}
+    >
+      {isHigh&&<div className={`absolute inset-0 opacity-30 ${
+        ev.rarity==='godly'?'animate-pulse bg-gradient-to-br from-yellow-400 via-fuchsia-500 to-cyan-400'
+        :ev.rarity==='mythical'?'animate-pulse bg-gradient-to-br from-fuchsia-500 to-pink-500'
+        :'animate-pulse bg-gradient-to-br from-amber-500 to-orange-500'
+      }`} />}
+      {/* Shimmer effect for rare+ */}
+      {isHigh&&<motion.div
+        initial={{x:'-100%'}}
+        animate={{x:'200%'}}
+        transition={{duration:1.5,repeat:Infinity,ease:"linear"}}
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+      />}
       <div className="relative p-5">
         <div className="flex items-center justify-between mb-3">
           <span className={`text-xs font-bold px-3 py-1 rounded-full ${ev.rarity==='godly'?'bg-yellow-400 text-yellow-950 animate-pulse':ev.rarity==='mythical'?'bg-gradient-to-r from-fuchsia-400 to-pink-400 text-white':`${cfg.color.replace('text-','bg-').replace(/400|300/,'500')}/20 ${cfg.color} border ${cfg.border}`}`}>{cfg.emoji} {cfg.label}</span>
@@ -194,20 +219,42 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-100 selection:bg-violet-500/30">
-      {/* Background effects */}
+    <main className="min-h-screen bg-stone-950 text-stone-100 selection:bg-violet-500/30" style={{backgroundColor:backgroundGlow!=='transparent'?undefined:'rgb(15,15,20)'}}>
+      {/* Animated background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-violet-900/10 via-transparent to-transparent"/>
-        <div className={`absolute bottom-0 left-0 right-0 h-64 ${phaseCfg.bg} blur-3xl`}/>
-        {/* Rare event glow */}
-        {event && (event.rarity==='epic'||event.rarity==='legendary'||event.rarity==='mythical'||event.rarity==='godly') && (
-          <div className={`absolute inset-0 opacity-20 animate-pulse ${
-            event.rarity==='godly'?'bg-gradient-to-br from-yellow-500 via-fuchsia-500 to-cyan-500'
-            :event.rarity==='mythical'?'bg-gradient-to-br from-fuchsia-500 to-pink-500'
-            :event.rarity==='legendary'?'bg-gradient-to-br from-amber-500 to-orange-500'
-            :'bg-gradient-to-br from-violet-500 to-purple-500'
-          }`} style={{mixBlendMode:'overlay'}}/>
+        <div className={`absolute inset-0 transition-all duration-1000 ${
+          backgroundGlow==='rgba(253,186,116,0.4)'?'bg-gradient-to-br from-yellow-900/30 via-fuchsia-900/20 to-cyan-900/30'
+          :backgroundGlow==='rgba(232,121,249,0.3)'?'bg-gradient-to-br from-fuchsia-900/30 via-pink-900/20 to-purple-900/30'
+          :backgroundGlow==='rgba(245,158,11,0.25)'?'bg-gradient-to-br from-amber-900/30 via-orange-900/20 to-red-900/30'
+          :backgroundGlow==='rgba(139,92,246,0.2)'?'bg-gradient-to-br from-violet-900/30 via-purple-900/20 to-indigo-900/30'
+          :'from-violet-900/10 via-transparent to-transparent'
+        }`} />
+        {/* Orbiting rings for rare events - Sol's RNG style */}
+        {(event?.rarity==='legendary'||event?.rarity==='mythical'||event?.rarity==='godly') && (
+          <>
+            <motion.div
+              animate={{rotate:360}}
+              transition={{duration:8,repeat:Infinity,ease:"linear"}}
+              className="absolute top-1/2 left-1/2 w-[500px] h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10"
+            />
+            <motion.div
+              animate={{rotate:-360}}
+              transition={{duration:12,repeat:Infinity,ease:"linear"}}
+              className="absolute top-1/2 left-1/2 w-[700px] h-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5"
+            />
+            {event?.rarity==='godly'&&<motion.div
+              animate={{rotate:360}}
+              transition={{duration:6,repeat:Infinity,ease:"linear"}}
+              className="absolute top-1/2 left-1/2 w-[900px] h-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-yellow-500/20"
+            />}
+          </>
         )}
+        <div className={`absolute bottom-0 left-0 right-0 h-64 blur-3xl transition-colors duration-1000 ${
+          event?.rarity==='godly'?'bg-gradient-to-t from-yellow-600/20 via-fuchsia-600/15 to-transparent'
+          :event?.rarity==='mythical'?'bg-gradient-to-t from-fuchsia-600/20 via-pink-600/15 to-transparent'
+          :event?.rarity==='legendary'?'bg-gradient-to-t from-amber-600/20 via-orange-600/15 to-transparent'
+          :phaseCfg.bg
+        }`}/>
       </div>
       <Particles particles={particles}/>
       <div className="relative max-w-lg mx-auto px-4 pb-12">
