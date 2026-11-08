@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { JuiceButton } from '../components/ui/JuiceButton';
 import { FloatingText } from '../components/ui/FloatingText';
 import { engine } from '../lib/audio-engine';
-import { EVENTS, getWeightedRandomEvent, RARITY_CONFIG, FAMOUS_LIVES, GameEvent, Dilemma, shouldShowDilemma, getPhase, PHASE_CONFIG, CAREERS, getCareerLuck, DILEMMAS, type Phase, type Career } from '../lib/events';
+import { EVENTS, getWeightedRandomEventWithLuck, RARITY_CONFIG, FAMOUS_LIVES, GameEvent, Dilemma, shouldShowDilemma, getPhase, PHASE_CONFIG, CAREERS, getCareerLuck, DILEMMAS, type Phase, type Career } from '../lib/events';
 import { UPGRADES, Upgrade } from '../lib/upgrades';
 import { ACHIEVEMENTS } from '../lib/achievements';
 import { supabase } from '../lib/supabaseClient';
@@ -83,7 +83,7 @@ export default function Home() {
         const dilemmas=DILEMMAS.filter(d=>ny>=d.minAge&&ny<=d.maxAge&&(!d.career||d.career===career));
         if(dilemmas.length){setDilemma(dilemmas[Math.floor(Math.random()*dilemmas.length)]);return;}
       }
-      const ev=getWeightedRandomEvent(ny,career);
+      const ev=getWeightedRandomEventWithLuck(ny,career,totalLuck);
       setEvent(ev);playSound(ev.rarity);burst(ev.rarity);
       const hc=ev.healthChange||0,mc=ev.moneyChange||0,hpc=ev.happinessChange||0,ic=ev.intelligenceChange||0,cc=ev.charismaChange||0;
       // Apply health regen upgrade
@@ -195,9 +195,19 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-stone-950 text-stone-100 selection:bg-violet-500/30">
+      {/* Background effects */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-violet-900/10 via-transparent to-transparent"/>
         <div className={`absolute bottom-0 left-0 right-0 h-64 ${phaseCfg.bg} blur-3xl`}/>
+        {/* Rare event glow */}
+        {event && (event.rarity==='epic'||event.rarity==='legendary'||event.rarity==='mythical'||event.rarity==='godly') && (
+          <div className={`absolute inset-0 opacity-20 animate-pulse ${
+            event.rarity==='godly'?'bg-gradient-to-br from-yellow-500 via-fuchsia-500 to-cyan-500'
+            :event.rarity==='mythical'?'bg-gradient-to-br from-fuchsia-500 to-pink-500'
+            :event.rarity==='legendary'?'bg-gradient-to-br from-amber-500 to-orange-500'
+            :'bg-gradient-to-br from-violet-500 to-purple-500'
+          }`} style={{mixBlendMode:'overlay'}}/>
+        )}
       </div>
       <Particles particles={particles}/>
       <div className="relative max-w-lg mx-auto px-4 pb-12">
@@ -275,6 +285,13 @@ export default function Home() {
           )}
         </AnimatePresence>
         <p className="mt-6 text-center text-[10px] font-mono text-stone-700">Rarezas descubiertas {unlocked.length}/{EVENTS.length+FAMOUS_LIVES.length}</p>
+        
+        {/* Reset button */}
+        <div className="mt-4 flex justify-center">
+          <button onClick={()=>{if(confirm('¿Borrar todos tus datos? Esta acción no se puede deshacer.')){setYear(0);setStats({health:100,money:50,happiness:50,intelligence:10,charisma:10});setUnlocked([]);setUpgrades({});setAchIds([]);setRebirths(0);setLuckBonus(0);setEvent(null);setDead(false);setCause('');setCareer(null);setShowCareerSelect(false);}}} className="px-4 py-2 text-xs font-mono text-stone-600 hover:text-rose-400 border border-stone-800 hover:border-rose-800/50 rounded-lg transition-all">
+            🗑️ Borrar todo
+          </button>
+        </div>
       </div>
       <AnimatePresence>{showCareerSelect&&<CareerSelect/>}</AnimatePresence>
       {/* Show career select at age 17 */}
