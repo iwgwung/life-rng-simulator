@@ -194,13 +194,13 @@ export default function Home() {
         if (newHealth <= 0) {
           setIsDead(true);
           setDeathCause(randomEvent.title);
-          saveRun(nextYear, newMoney, randomEvent.title, newRebirths);
+          saveRun(nextYear, newMoney, randomEvent.title, rebirths);
         }
 
         // Check for godly achievement
         if (randomEvent.rarity === 'godly') {
           const achIdx = ACHIEVEMENTS.findIndex(a => a.id === 'godly_event');
-          if (achIdx >= 0) ACHIEVEMENTS[achIdx].condition(newStats, nextYear, 0, 0);
+          if (achIdx >= 0) ACHIEVEMENTS[achIdx].condition({ health: newHealth, money: newMoney, happiness: newHappy, intelligence: newInt, charisma: newChar }, nextYear, 0, rebirths);
         }
 
         checkAchievements({ health: newHealth, money: newMoney, happiness: newHappy, intelligence: newInt, charisma: newChar }, nextYear, [], rebirths);
@@ -263,7 +263,7 @@ export default function Home() {
   }, [autoPlay, isDead, handlePassYear]);
 
   // Stats panel helper
-  const renderStatCard = (label: string, value: number, color: string, icon: string, key: string) => (
+  const renderStatCard = (label: string, value: number | string, color: string, icon: string, key: string) => (
     <div className="relative bg-slate-900/80 border border-slate-700 p-3 rounded-xl text-center shadow-lg">
       <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{icon} {label}</h3>
       <p className={`text-2xl font-black ${color}`}>{value}</p>
@@ -325,17 +325,17 @@ export default function Home() {
                 {event.moneyChange > 0 ? '+' : ''}${Math.abs(event.moneyChange)}
               </span>
             )}
-            {event.happinessChange !== 0 && (
+            {event.happinessChange && event.happinessChange !== 0 && (
               <span className={`px-2 py-1 rounded ${event.happinessChange > 0 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-rose-500/20 text-rose-400'}`}>
                 {event.happinessChange > 0 ? '+' : ''}{event.happinessChange} 😊
               </span>
             )}
-            {event.intelligenceChange !== 0 && (
+            {event.intelligenceChange && event.intelligenceChange !== 0 && (
               <span className={`px-2 py-1 rounded ${event.intelligenceChange > 0 ? 'bg-blue-500/20 text-blue-400' : 'bg-rose-500/20 text-rose-400'}`}>
                 {event.intelligenceChange > 0 ? '+' : ''}{event.intelligenceChange} 🧠
               </span>
             )}
-            {event.charismaChange !== 0 && (
+            {event.charismaChange && event.charismaChange !== 0 && (
               <span className={`px-2 py-1 rounded ${event.charismaChange > 0 ? 'bg-pink-500/20 text-pink-400' : 'bg-rose-500/20 text-rose-400'}`}>
                 {event.charismaChange > 0 ? '+' : ''}{event.charismaChange} ⭐
               </span>
@@ -428,7 +428,7 @@ export default function Home() {
               {/* Action buttons */}
               {!isDead && (
                 <div className="flex gap-2 justify-center">
-                  <JuiceButton onClick={handlePassYear} toneIndex={2} className="flex-1 max-w-[200px]">
+                  <JuiceButton onClick={handlePassYear} toneIndex={2}>
                     Vivir un Año Más
                   </JuiceButton>
                   <button
@@ -445,8 +445,7 @@ export default function Home() {
           {tab === 'inventario' && (
             <motion.div key="inventario" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <div className="space-y-2">
-                {[...new Map(unlockedEvents.map(e => [e.title, e])).values()]
-                  .sort((a, b) => {
+                {Array.from(new Map(unlockedEvents.map(e => [e.title, e])).values()).sort((a, b) => {
                     const order = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythical', 'godly'];
                     return order.indexOf(a.rarity) - order.indexOf(b.rarity);
                   })
