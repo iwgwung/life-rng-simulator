@@ -97,66 +97,67 @@ export interface Dilemma {
   weight: number; // chance per year (higher = more likely)
 }
 interface Stats { health:number; money:number; happiness:number; intelligence:number; charisma:number; }
+const up = (s:Stats,partial:Partial<Stats>):Stats=>({...s,...partial});
 
 const makeDilemmas = (): Dilemma[] => [
   {
     id:'crypto', question:'Un amigo te ofrece invertir $200 en criptomoneda nueva. Dice que va a explotar.',
-    optionA:{label:'¡Invertir!',success:true,effect:s=>({money:s.money+19000,happiness:s.happiness,intelligence:s.intelligence,charisma:s.charisma,health:s.health})}, // 90% gain
-    optionB:{label:'Ignorar',success:false,effect:s=>({...s})},
+    optionA:{label:'¡Invertir!',success:true,effect:s=>up(s,{money:s.money+19000})},
+    optionB:{label:'Ignorar',success:false,effect:s=>s},
     minAge:18,maxAge:55,career:null,weight:2,
   },
   {
     id:'lottery_ticket', question:'Compraste un raspadito y ganaste $10. ¿Guardarlo o gastártelo?',
-    optionA:{label:'Ahorrar ($10→$500)',success:true,effect:s=>({money:s.money+490,happiness:s.happiness,intelligence:s.intelligence,charisma:s.charisma,health:s.health})},
-    optionB:{label:'Gastarlo ($10)',success:false,effect:s=>({money:s.money+0,happiness:s.happiness+3,...s})},
+    optionA:{label:'Ahorrar ($10→$500)',success:true,effect:s=>up(s,{money:s.money+490})},
+    optionB:{label:'Gastarlo ($10)',success:false,effect:s=>up(s,{happiness:s.happiness+3})},
     minAge:10,maxAge:60,career:null,weight:3,
   },
   {
     id:'find_wallet', question:'Encontraste una billetera con $500. Nadie te ve.',
-    optionA:{label:'Devolverla (+ honor)',success:true,effect:s=>({charisma:s.charisma+10,happiness:s.happiness+8,money:s.money,intelligence:s.intelligence,health:s.health})},
-    optionB:{label:'Quedártela (+ dinero)',success:false,effect:s=>({money:s.money+500,...s})},
+    optionA:{label:'Devolverla (+ honor)',success:true,effect:s=>up(s,{charisma:s.charisma+10,happiness:s.happiness+8})},
+    optionB:{label:'Quedártela (+ dinero)',success:false,effect:s=>up(s,{money:s.money+500})},
     minAge:14,maxAge:60,career:null,weight:2,
   },
   {
     id:'gambling', question:'Un conocido te invita a jugar póker. Apuestas $100.',
-    optionA:{label:'Jugar (50/50)',success:true,effect:s=>({money:s.money+100,...s})},
-    optionB:{label:'Rechazar (+ sabiduría)',success:false,effect:s=>({intelligence:s.intelligence+5,...s})},
+    optionA:{label:'Jugar (50/50)',success:true,effect:s=>up(s,{money:s.money+100})},
+    optionB:{label:'Rechazar (+ sabiduría)',success:false,effect:s=>up(s,{intelligence:s.intelligence+5})},
     minAge:18,maxAge:55,career:null,weight:3,
   },
   {
     id:'borrow_money', question:'Tu hermano te pide prestados $200. No estás seguro que devuelva.',
     optionA:{label:'Prestartelo (+ familia)',success:true,effect:s=>({happiness:s.happiness+10,charisma:s.charisma+3,money:s.money,intelligence:s.intelligence,health:s.health})},
-    optionB:{label:'Decir que no (- familia)',success:false,effect:s=>({money:s.money,happiness:s.happiness-8,...s})},
+    optionB:{label:'Decir que no (- familia)',success:false,effect:s=>up(s,{happiness:s.happiness-8})},
     minAge:18,maxAge:50,career:null,weight:2,
   },
   {
     id:'side_hustle', question:'Tenes una idea de negocio. ¿Arriesgás tus ahorros?',
-    optionA:{label:'Emprender (+/$$$)',success:true,effect:s=>({money:s.money+8000,intelligence:s.intelligence+5,happiness:s.happiness,charisma:s.charisma,health:s.health})},
-    optionB:{label:'Quedarse tranquilo',success:false,effect:s=>({happiness:s.happiness+3,...s})},
+    optionA:{label:'Emprender (+/$$$)',success:true,effect:s=>up(s,{money:s.money+8000,intelligence:s.intelligence+5})},
+    optionB:{label:'Quedarse tranquilo',success:false,effect:s=>up(s,{happiness:s.happiness+3})},
     minAge:20,maxAge:45,career:'emprender',weight:3,
   },
   {
     id:'street_deal', question:'Un tipo te ofrece "dinero fácil" vendiendo algo en la esquina.',
     optionA:{label:'Aceptar (+$$ pero riesgo)',success:true,effect:s=>({money:s.money+3000,charisma:s.charisma-5,happiness:s.happiness,intelligence:s.intelligence,health:s.health})},
-    optionB:{label:'Rechazar (+ seguridad)',success:false,effect:s=>({happiness:s.happiness+5,...s})},
+    optionB:{label:'Rechazar (+ seguridad)',success:false,effect:s=>up(s,{happiness:s.happiness+5})},
     minAge:16,maxAge:40,career:'delinquir',weight:4,
   },
   {
     id:'study_hard', question:'Tenés un examen importante mañana. ¿Estudiás toda la noche o salís?',
-    optionA:{label:'Estudiar (+IQ)',success:true,effect:s=>({intelligence:s.intelligence+15,happiness:s.happiness-5,money:s.money,charisma:s.charisma,health:s.health})},
-    optionB:{label:'Salir (+ diversión)',success:false,effect:s=>({happiness:s.happiness+12,intelligence:s.intelligence-3,...s})},
+    optionA:{label:'Estudiar (+IQ)',success:true,effect:s=>up(s,{intelligence:s.intelligence+15,happiness:s.happiness-5})},
+    optionB:{label:'Salir (+ diversión)',success:false,effect:s=>up(s,{happiness:s.happiness+12,intelligence:s.intelligence-3})},
     minAge:12,maxAge:25,career:'estudiar',weight:3,
   },
   {
     id:'work_overtime', question:'Te ofrecen horas extras. ¿Las hacés o descansás?',
     optionA:{label:'Horas extra (+$$)',success:true,effect:s=>({money:s.money+600,health:s.health-5,happiness:s.happiness,intelligence:s.intelligence,charisma:s.charisma})},
-    optionB:{label:'Descansar (+salud)',success:false,effect:s=>({health:s.health+8,...s})},
+    optionB:{label:'Descansar (+salud)',success:false,effect:s=>up(s,{health:s.health+8})},
     minAge:18,maxAge:55,career:'obrero',weight:3,
   },
   {
     id:'big_purchase', question:'Viste un auto increíble. ¿Lo comprás crédito?',
-    optionA:{label:'Comprar (-$$$ pero feliz)',success:true,effect:s=>({money:s.money-30000,happiness:s.happiness+20,...s})},
-    optionB:{label:'No comprar (+ ahorro)',success:false,effect:s=>({money:s.money,...s})},
+    optionA:{label:'Comprar (-$$$ pero feliz)',success:true,effect:s=>up(s,{money:s.money-30000,happiness:s.happiness+20})},
+    optionB:{label:'No comprar (+ ahorro)',success:false,effect:s=>up(s,{})},
     minAge:21,maxAge:50,career:null,weight:2,
   },
 ];
