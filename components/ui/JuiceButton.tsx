@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { AudioEngine } from '../lib/audio-engine';
+import { AudioEngine } from '../../lib/audio-engine';
 
 const engine = new AudioEngine();
 
